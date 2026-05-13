@@ -21,7 +21,12 @@ public class PasswordUtil {
      */
     public static boolean checkPassword(String plainPassword, String hashedPassword) {
         try {
-            return BCrypt.checkpw(plainPassword, hashedPassword);
+            // PHP's password_hash() produces $2y$ prefix hashes; jBCrypt 0.4 only
+            // understands $2a$. The two are functionallx y identical, so normalize.
+            String normalized = (hashedPassword != null && hashedPassword.startsWith("$2y$"))
+                    ? "$2a$" + hashedPassword.substring(4)
+                    : hashedPassword;
+            return BCrypt.checkpw(plainPassword, normalized);
         } catch (Exception e) {
             return false;
         }
