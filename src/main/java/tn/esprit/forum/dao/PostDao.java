@@ -2,7 +2,7 @@ package tn.esprit.forum.dao;
 
 import tn.esprit.forum.entity.Post;
 import tn.esprit.utils.DbConnect;
-
+import tn.esprit.forum.entity.ReactionInfo;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -201,5 +201,48 @@ public class PostDao {
             }
         }
         return map;
+    }
+    // inside PostDao
+    public List<ReactionInfo> getReactionsWithUsers(int postId) throws SQLException {
+
+        String sql = """
+    SELECT pr.user_id,
+           u.full_name,
+           pr.reaction,
+           pr.created_at
+    FROM post_reaction pr
+    JOIN user u ON u.id = pr.user_id
+    WHERE pr.id_post = ?
+    ORDER BY pr.created_at DESC
+""";
+        List<ReactionInfo> list = new ArrayList<>();
+
+        try (PreparedStatement st = cnx.prepareStatement(sql)) {
+
+            st.setInt(1, postId);
+
+            try (ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+
+                    int uid = rs.getInt("user_id");
+                    String name = rs.getString("full_name");
+                    String reaction = rs.getString("reaction");
+
+                    Timestamp ts = rs.getTimestamp("created_at");
+
+                    ReactionType type = ReactionType.valueOf(reaction);
+
+                    list.add(new ReactionInfo(
+                            uid,
+                            name,
+                            type,
+                            ts == null ? null : ts.toLocalDateTime()
+                    ));
+                }
+            }
+        }
+
+        return list;
     }
 }

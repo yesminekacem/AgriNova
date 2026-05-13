@@ -1,55 +1,60 @@
 package tn.esprit.utils;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
- * Central configuration for product image storage.
- *
- * Both the Java (JavaFX) app and the Symfony web app share the same
- * upload directory:  <project_root>/symf/AgriNovaSYMFONY/public/uploads/products/
- *
- * Java writes images there when a product is created/edited, and reads
- * them from there when displaying product cards.  Symfony already writes
- * and reads from the same location, so both sides will always see the
- * same files.
+ * Configuration class for handling product and user image uploads.
+ * Manages the shared upload directory for images across the application.
  */
 public class ImageConfig {
 
     /**
-     * Absolute path to the shared Symfony upload directory.
-     *
-     * The path is resolved relative to the Java project root so it works
-     * regardless of where on disk the repo is cloned, as long as the two
-     * sub-projects (java/ and symf/) sit next to each other inside the
-     * same parent folder (agrinova/).
+     * The absolute path to the uploads directory
      */
-    public static final String UPLOAD_DIR;
+    public static final String UPLOAD_DIR = "uploads/posts";
 
-    static {
-        // Walk up from java/ to agrinova/, then down to the Symfony public dir
-        String javaProjectRoot = System.getProperty("user.dir"); // e.g. .../agrinova/java
-        Path uploadsPath = Paths.get(javaProjectRoot)
-                .getParent()                          // agrinova/
-                .resolve("symf")
-                .resolve("AgriNovaSYMFONY")
-                .resolve("public")
-                .resolve("uploads")
-                .resolve("products");
+    /**
+     * Get the File object for a stored image filename
+     * @param filename The filename stored in the database
+     * @return The File object pointing to the image, or null if not found
+     */
+    public static File getImageFile(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return null;
+        }
 
-        UPLOAD_DIR = uploadsPath.toAbsolutePath().toString();
+        File uploadDir = new File(UPLOAD_DIR);
 
-        // Create the directory if it doesn't exist yet
-        File dir = uploadsPath.toFile();
-        if (!dir.exists()) {
-            dir.mkdirs();
+        // Ensure the upload directory exists
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        File imageFile = new File(uploadDir, filename);
+        return imageFile;
+    }
+
+    /**
+     * Get the full URL path for an image (for JavaFX Image loading)
+     * @param filename The filename stored in the database
+     * @return The file URI string, or null if file doesn't exist
+     */
+    public static String getImagePath(String filename) {
+        File imageFile = getImageFile(filename);
+        if (imageFile != null && imageFile.exists()) {
+            return imageFile.toURI().toString();
+        }
+        return null;
+    }
+
+    /**
+     * Verify that the upload directory exists, create if necessary
+     */
+    public static void ensureUploadDirExists() {
+        File uploadDir = new File(UPLOAD_DIR);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
         }
     }
-
-    /** Returns the full path to a stored image given just its filename. */
-    public static File getImageFile(String filename) {
-        if (filename == null || filename.isBlank()) return null;
-        return new File(UPLOAD_DIR, filename);
-    }
 }
+

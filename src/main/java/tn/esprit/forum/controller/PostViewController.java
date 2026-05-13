@@ -3,6 +3,9 @@ import tn.esprit.forum.dao.NotificationDao;
 import tn.esprit.forum.entity.Notification;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import tn.esprit.forum.entity.ReactionInfo;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -112,6 +115,8 @@ public class PostViewController {
 
         commentList.setCellFactory(lv -> new CommentMenuCell(this));
         setupReactionPopup();
+        lblPostLikes.setOnMouseClicked(e -> showReactionsDialog());
+        lblPostLikes.setStyle("-fx-cursor: hand;");
         spMain.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, e -> {
             if (reactionPopup == null || !reactionPopup.isShowing()) return;
 
@@ -996,5 +1001,67 @@ public class PostViewController {
     private boolean isFlaggedText(String text) {
         return text != null && text.contains("***");
     }
+    private void showReactionsDialog() {
 
+        try {
+
+            var list = postDao.getReactionsWithUsers(postId);
+
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Reactions");
+
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+            ListView<ReactionInfo> lv = new ListView<>();
+            lv.setItems(FXCollections.observableArrayList(list));
+
+            lv.setCellFactory(x -> new ListCell<>() {
+
+                @Override
+                protected void updateItem(ReactionInfo it, boolean empty) {
+
+                    super.updateItem(it, empty);
+
+                    if (empty || it == null) {
+                        setGraphic(null);
+                        return;
+                    }
+
+                    String file = it.getReaction().name().toLowerCase() + ".png";
+
+                    ImageView icon = new ImageView(new Image(
+                            getClass().getResource("/images/reactions/" + file).toExternalForm()
+                    ));
+
+                    icon.setFitWidth(18);
+                    icon.setFitHeight(18);
+
+                    Label name = new Label(it.getUserName());
+                    name.setStyle("-fx-font-weight: 900;");
+
+                    Label type = new Label(it.getReaction().displayName);
+
+                    HBox row = new HBox(10, icon, name, type);
+                    row.setAlignment(Pos.CENTER_LEFT);
+                    row.setPadding(new Insets(8));
+
+                    setGraphic(row);
+                }
+            });
+
+            lv.setPrefHeight(350);
+            lv.setPrefWidth(420);
+
+            dialog.getDialogPane().setContent(lv);
+
+            dialog.showAndWait();
+
+        } catch (SQLException e) {
+
+            e.printStackTrace();
+
+            new Alert(Alert.AlertType.ERROR,
+                    "Could not load reactions: " + e.getMessage()).show();
+        }
+    }
 }

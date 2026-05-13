@@ -18,7 +18,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <javafx.version>22</javafx.version>
+        <javafx.version>22.0.2</javafx.version>
         <mysql.version>8.0.33</mysql.version>
         <bcrypt.version>0.4</bcrypt.version>
     </properties>
@@ -63,6 +63,12 @@
             <groupId>com.sun.mail</groupId>
             <artifactId>javax.mail</artifactId>
             <version>1.6.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mailersend</groupId>
+            <artifactId>java-sdk</artifactId>
+            <version>1.5.0</version>
         </dependency>
 
         <!-- Activation API (required for JavaMail) -->
