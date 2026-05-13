@@ -437,7 +437,9 @@ public class ProductListingController {
 
     /**
      * Copies the user-selected image file into the shared Symfony upload directory
-     * and returns the new filename stored in the DB.
+     * and returns the ABSOLUTE PATH of the destination file.
+     * This absolute path is what gets stored in the database, so both Java and
+     * Symfony can locate the file without any additional path construction.
      * Uses a UUID so filenames never clash between Java and Symfony uploads.
      */
     private String copyImageToSharedFolder(String sourceAbsolutePath) throws IOException {
@@ -450,7 +452,8 @@ public class ProductListingController {
         String newFilename = UUID.randomUUID().toString().replace("-", "") + extension.toLowerCase();
         File dest = new File(ImageConfig.UPLOAD_DIR, newFilename);
         Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        return newFilename;
+        // Return the full absolute path — this is what gets saved to the DB
+        return dest.getAbsolutePath();
     }
 
     private void handleAddToCart(ProductListing product) {
@@ -657,20 +660,27 @@ public class ProductListingController {
                 product.setPrice_per_unit(price);
                 product.setQuantity(quantity);
 
-                // Only copy a new image if the user actually picked a new file
-                // (i.e. the path is absolute, not just a stored filename)
+                // Only copy a new image if the user actually picked a different file.
+                // The DB already holds an absolute path; if imagePath equals the stored
+                // absolute path the user didn't change the image — keep it.
+                // If the user browsed to a new file, imagePath will be a different
+                // absolute path (outside the upload folder) — copy it over.
                 File maybeNewFile = new File(imagePath);
-                if (maybeNewFile.isAbsolute() && maybeNewFile.exists()) {
+                String currentStoredPath = product.getPicture();
+                boolean isNewFile = maybeNewFile.isAbsolute()
+                        && maybeNewFile.exists()
+                        && !imagePath.equals(currentStoredPath);
+                if (isNewFile) {
                     try {
-                        String storedFilename = copyImageToSharedFolder(imagePath);
-                        product.setPicture(storedFilename);
+                        String newAbsolutePath = copyImageToSharedFolder(imagePath);
+                        product.setPicture(newAbsolutePath);
                     } catch (IOException ioEx) {
                         showAlert("❌ Error", "Failed to save image: " + ioEx.getMessage(), Alert.AlertType.ERROR);
                         e.consume();
                         return;
                     }
                 }
-                // else: imagePath is already just a filename in the DB — keep it unchanged
+                // else: same absolute path already in DB — no change needed
 
                 ProductListingService service = new ProductListingService();
                 service.modifier(product);

@@ -118,9 +118,12 @@ public class CartController {
         imageView.setFitHeight(90);
         imageView.setPreserveRatio(true);
         try {
-            if (item.getPicture() != null) {
-                File file = new File("src/main/resources/images/products/" + item.getPicture());
-                if (file.exists()) imageView.setImage(new Image(file.toURI().toString()));
+            if (item.getPicture() != null && !item.getPicture().isBlank()) {
+                // picture column stores the absolute path to the shared upload folder
+                File file = new File(item.getPicture());
+                if (file.exists()) {
+                    imageView.setImage(new Image(file.toURI().toString()));
+                }
             }
         } catch (Exception ignored) {}
 
