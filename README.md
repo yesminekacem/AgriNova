@@ -2,7 +2,7 @@
 
 > **Repository:** `Esprit-PIDEV-3A2-2026-AgriNova`
 
-This project was developed as part of the **PIDEV – 3rd Year Engineering Program** at **Esprit School of Engineering** (Academic Year 2025–2026).
+Developed as part of the **PIDEV – 3rd Year Engineering Program** at **Esprit School of Engineering** (Academic Year 2025–2026).
 
 AgriNova is a comprehensive JavaFX desktop application for modern farm management, featuring crop tracking, AI-powered task generation, disease detection, a community forum, a marketplace with PayPal checkout, and a full user authentication system with Face ID.
 
@@ -17,10 +17,11 @@ AgriNova is a full-stack desktop application built with **JavaFX 22** and **MySQ
 ## 🚀 Features
 
 | Module | Key Features |
-|---|---|
+|--------|--------------|
 | 👤 **User** | Registration, Login, Face ID, Email OTP, Password Reset, Admin Panel |
 | 🌾 **Crops** | Crop tracking, task management, AI task generation, disease detection, PDF export |
 | 💬 **Forum** | Posts, comments, reactions, notifications, AI title/tag generation, profanity filter |
+| 📦 **Inventory & Rentals** | Equipment inventory, rental management, rental calendar, AI assistant, weather API, maps API, QR codes, email notifications, PDF contracts |
 | 🛒 **Marketplace** | Product listings, cart, orders, PayPal checkout, delivery map |
 
 ---
@@ -28,8 +29,9 @@ AgriNova is a full-stack desktop application built with **JavaFX 22** and **MySQ
 ## 🛠️ Tech Stack
 
 ### Backend
+
 | Layer | Technology |
-|---|---|
+|-------|------------|
 | **Language** | Java 17 |
 | **Build Tool** | Maven |
 | **Database** | MySQL 8 (JDBC) |
@@ -39,14 +41,19 @@ AgriNova is a full-stack desktop application built with **JavaFX 22** and **MySQ
 | **AI Tasks** | Flask (Python) + Ollama LLM — local REST API |
 | **AI Forum** | Groq API (LLaMA 3.3 70B) |
 | **Disease Detection** | YOLOv8 (Python) — local REST API |
+| **Weather** | OpenWeatherMap API (equipment/scheduling context) |
+| **Maps** | Maps API (rental location & delivery) |
+| **QR Codes** | QR code generation for rental contracts |
+| **AI Assistant** | LLM-powered inventory/rental assistant |
 | **Payment** | PayPal REST API (Sandbox) |
 | **Excel Export** | Apache POI 5.2.5 |
 | **PDF Export** | iText 5.5.13 |
 | **Webcam** | Sarxos Webcam Capture 0.3.12 |
 
 ### Frontend
+
 | Layer | Technology |
-|---|---|
+|-------|------------|
 | **UI Framework** | JavaFX 22 |
 | **Styling** | CSS (JavaFX stylesheets) |
 | **Layout** | FXML |
@@ -71,6 +78,11 @@ AgriNova/
 │   ├── forum/                         # Community forum module
 │   │   ├── entity/
 │   │   ├── dao/
+│   │   └── controller/
+│   ├── inventory/                     # Inventory & rentals module
+│   │   ├── entity/
+│   │   ├── dao/
+│   │   ├── service/
 │   │   └── controller/
 │   ├── marketplace/                   # Marketplace & orders module
 │   │   ├── entity/
@@ -122,6 +134,11 @@ org.json 20231013  (JSON parsing)
 sarxos/webcam-capture 0.3.12
 SLF4J Simple 1.7.36
 
+<!-- Inventory & Rentals -->
+OpenWeatherMap API (java.net.http.HttpClient)
+Maps API (java.net.http.HttpClient)
+ZXing 3.5.2        (QR code generation)
+
 <!-- Payment -->
 PayPal REST API (Sandbox) — java.net.http
 ```
@@ -135,22 +152,25 @@ PayPal REST API (Sandbox) — java.net.http
 - **Java 17+**
 - **Maven 3.8+**
 - **MySQL 8+**
-- **Python 3.9+** (for AI APIs — optional)
-- **Ollama** (for local LLM task generation — optional)
+- **Python 3.9+** _(for AI APIs — optional)_
+- **Ollama** _(for local LLM task generation — optional)_
 
 ### Database Setup
 
 1. Create a MySQL database:
+
 ```sql
 CREATE DATABASE agrinova;
 ```
 
 2. Import the schema and run migrations:
+
 ```sql
 SOURCE database-updates.sql;
 ```
 
 3. Configure your DB connection in `src/main/java/tn/esprit/utils/DbConnect.java`:
+
 ```java
 private static final String URL = "jdbc:mysql://localhost:3306/agrinova";
 private static final String USER = "root";
@@ -160,6 +180,7 @@ private static final String PASSWORD = "yourpassword";
 ### Python AI APIs (Optional)
 
 **Crop Task Generation:**
+
 ```bash
 cd crop_ai_api
 pip install flask requests
@@ -168,6 +189,7 @@ python app.py
 ```
 
 **Plant Disease Detection:**
+
 ```bash
 cd plant_ai_api
 pip install flask ultralytics pillow
@@ -178,9 +200,11 @@ python main.py
 ### External API Configuration
 
 | API | File | Where to get credentials |
-|---|---|---|
+|-----|------|--------------------------|
 | **Face++** | `FaceIdService.java` | [faceplusplus.com](https://www.faceplusplus.com/) — free 1000 calls/month |
 | **Groq AI** | env `GROQ_API_KEY` | [console.groq.com](https://console.groq.com) — free |
+| **OpenWeatherMap** | `WeatherService.java` | [openweathermap.org](https://openweathermap.org/api) — free tier |
+| **Maps API** | `MapService.java` | Provider of your choice (e.g. Google Maps, Leaflet) |
 | **PayPal** | `PayPalConfig.java` | [developer.paypal.com](https://developer.paypal.com) — sandbox |
 | **MailerSend** | `EmailService.java` | [mailersend.com](https://www.mailersend.com) — free tier |
 
@@ -208,6 +232,7 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 ## 🌟 Module Details
 
 ### 👤 User Module
+
 - Signup with **email OTP verification** (MailerSend)
 - Login with **Remember Me** (AES-128 encrypted persistent token, 7-day TTL)
 - **Face ID login** via webcam + Face++ API comparison (76% confidence threshold)
@@ -217,6 +242,7 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 - See [`USER_MODULE.md`](USER_MODULE.md) for full documentation
 
 ### 🌾 Crop Module
+
 - Add/edit/delete crops with image, growth stage, area, planting/harvest dates
 - Task management per crop (CRUD, status tracking, cost)
 - **AI Task Generation** — sends crop data to local Flask API → LLM generates 5 farming tasks
@@ -225,6 +251,7 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 - Data access via DAO pattern with raw JDBC
 
 ### 💬 Forum Module
+
 - Create/edit/delete posts with images and categories
 - Comments with likes
 - **Emoji reactions** (ReactionType enum)
@@ -233,7 +260,24 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 - **Profanity filter** on post/comment content
 - Card-based UI with custom `ListCell` components
 
+### 📦 Inventory & Rentals Module
+
+- Full **equipment inventory** management — add/edit/delete items with type, category, daily rate, availability status
+- **Rental management** — create rentals with renter info (name, contact), start/end dates, rate, and auto-calculated total cost
+- Rental status tracking: **Active**, **Pending**, **Completed**, **Overdue**, **Cancelled**
+- Filter and search rentals by renter name, equipment, or status
+- **Rental Calendar** — monthly calendar view showing equipment bookings day-by-day with color-coded availability (Available / Booked / Overdue / Today); filter by equipment; day-detail panel on click
+- **AI Assistant** — LLM-powered chat assistant for inventory queries, rental recommendations, and scheduling help
+- **Weather API integration** — real-time weather data surfaced alongside rentals to inform equipment scheduling decisions
+- **Maps API integration** — location-aware rental tracking and delivery/pickup coordinates
+- **QR Code generation** — unique QR code per rental for quick identification and check-in/check-out scanning
+- **Email notifications** — automated rental confirmation and reminder emails sent via MailerSend SMTP
+- **PDF Contract export** — generates a printable rental contract per booking via iText
+- Star **rating system** on completed rentals
+- Admin dashboard with live stats: active rentals this month, overdue count, pending approvals
+
 ### 🛒 Marketplace Module
+
 - Product listings with images, price, quantity, category, status
 - Shopping cart
 - Order management with delivery address
@@ -246,7 +290,7 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 ## 🗂️ Key Files Reference
 
 | File | Purpose |
-|---|---|
+|------|---------|
 | `MainFX.java` | App entry point, auto-login logic, icon, stage setup |
 | `navigation/Router.java` | In-app navigation between pages |
 | `navigation/MainLayoutController.java` | User dashboard layout + topbar |
@@ -259,6 +303,11 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 | `utils/VerificationCodeManager.java` | OTP storage with expiry |
 | `utils/ValidationUtil.java` | Email & password validators |
 | `utils/GroqAiService.java` | Groq LLM API client |
+| `inventory/service/WeatherService.java` | OpenWeatherMap API wrapper |
+| `inventory/service/MapService.java` | Maps API wrapper |
+| `inventory/service/QrCodeService.java` | ZXing QR code generator |
+| `inventory/service/RentalEmailService.java` | Rental confirmation & reminder emails |
+| `inventory/controller/RentalCalendarController.java` | Monthly rental calendar view |
 | `crop_ai_api/app.py` | Flask API for AI task generation |
 | `plant_ai_api/main.py` | YOLOv8 disease detection API |
 
@@ -267,7 +316,7 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 ## 🔒 Security Notes
 
 | Concern | Implementation |
-|---|---|
+|---------|----------------|
 | Passwords | BCrypt cost 12 — never stored plain |
 | Auth token | AES-128 encrypted, stored in OS user preferences |
 | SQL injection | 100% `PreparedStatement` — no string concatenation |
@@ -282,11 +331,12 @@ UPDATE user SET role = 'ADMIN' WHERE email = 'your@email.com';
 Developed by 3rd Year Engineering students — Class **3A2**
 
 | Name | Module |
-|---|---|
+|------|--------|
 | Team Member 1 | User Module & Authentication |
 | Team Member 2 | Crop Module & AI Integration |
 | Team Member 3 | Forum Module |
 | Team Member 4 | Marketplace & PayPal |
+| Team Member 5 | Inventory & Rentals Module |
 
 > Replace with actual team member names and GitHub profiles.
 
@@ -301,26 +351,17 @@ Developed at **Esprit School of Engineering – Tunisia**
 - **Academic Year:** 2025–2026
 - **Institution:** [Esprit School of Engineering](https://esprit.tn)
 
-This project was developed as part of the **PIDEV – 3rd Year Engineering Program** at **Esprit School of Engineering** (Academic Year 2025–2026), as a practical application of software engineering principles including layered architecture, design patterns, API integration, and full-stack desktop development.
+This project demonstrates software engineering principles including layered architecture, design patterns, API integration, and full-stack desktop development.
 
 ---
 
 ## 🏷️ GitHub Topics
 
 ```
-esprit-school-of-engineering
-academic-project
-esprit-pidev
-2025-2026
-javafx
-java
-mysql
-javafx-application
-desktop-application
-face-recognition
-ai-integration
-paypal
-yolov8
+esprit-school-of-engineering  academic-project  esprit-pidev  2025-2026
+javafx  java  mysql  javafx-application  desktop-application
+face-recognition  ai-integration  paypal  yolov8
+rental-management  inventory-management  qr-code  weather-api
 ```
 
 ---
@@ -332,6 +373,8 @@ yolov8
 - [Face++](https://www.faceplusplus.com/) — free face recognition API
 - [Groq](https://groq.com/) — free LLaMA inference API
 - [MailerSend](https://www.mailersend.com/) — transactional email service
+- [OpenWeatherMap](https://openweathermap.org/) — weather data API
+- [ZXing](https://github.com/zxing/zxing) — open-source QR code library
 - [PayPal Developer](https://developer.paypal.com/) — sandbox payment API
 - [Sarxos Webcam Capture](https://github.com/sarxos/webcam-capture) — open-source webcam library
 - [Apache POI](https://poi.apache.org/) — open-source Excel library

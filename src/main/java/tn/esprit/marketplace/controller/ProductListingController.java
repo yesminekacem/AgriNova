@@ -4,6 +4,7 @@ import tn.esprit.marketplace.service.CartService;
 import tn.esprit.marketplace.service.ProductListingService;
 import tn.esprit.marketplace.entity.Cart;
 import tn.esprit.marketplace.entity.ProductListing;
+import tn.esprit.utils.ImageConfig;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,8 +20,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 import tn.esprit.utils.SessionManager;
 import tn.esprit.user.entity.User;
 
@@ -247,6 +252,16 @@ public class ProductListingController {
                     dbStatus = "available";
                 }
 
+                // Copy the chosen image into the shared upload folder and get the stored filename
+                String storedFilename;
+                try {
+                    storedFilename = copyImageToSharedFolder(imagePath);
+                } catch (IOException ioEx) {
+                    showAlert("❌ Error", "Failed to save image: " + ioEx.getMessage(), Alert.AlertType.ERROR);
+                    e.consume();
+                    return;
+                }
+
                 ProductListing newProduct = new ProductListing(
                         getCurrentUser(),
                         name,
@@ -254,7 +269,7 @@ public class ProductListingController {
                         quantity,
                         dbStatus,
                         description,
-                        new File(imagePath).getName(),
+                        storedFilename,
                         category
                 );
 
@@ -409,14 +424,33 @@ public class ProductListingController {
 
     private void loadProductImage(ProductListing product, ImageView imageView) {
         try {
-            String path = "src/main/resources/images/products/" + product.getPicture();
-            File file = new File(path);
-            if (file.exists()) {
+            File file = ImageConfig.getImageFile(product.getPicture());
+            if (file != null && file.exists()) {
                 imageView.setImage(new Image(file.toURI().toString()));
+            } else {
+                System.out.println("Image not found in shared folder: " + product.getPicture());
             }
         } catch (Exception e) {
             System.out.println("Image load failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * Copies the user-selected image file into the shared Symfony upload directory
+     * and returns the new filename stored in the DB.
+     * Uses a UUID so filenames never clash between Java and Symfony uploads.
+     */
+    private String copyImageToSharedFolder(String sourceAbsolutePath) throws IOException {
+        File source = new File(sourceAbsolutePath);
+        String extension = "";
+        int dot = source.getName().lastIndexOf('.');
+        if (dot >= 0) {
+            extension = source.getName().substring(dot); // e.g. ".jpg"
+        }
+        String newFilename = UUID.randomUUID().toString().replace("-", "") + extension.toLowerCase();
+        File dest = new File(ImageConfig.UPLOAD_DIR, newFilename);
+        Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return newFilename;
     }
 
     private void handleAddToCart(ProductListing product) {
@@ -622,7 +656,21 @@ public class ProductListingController {
 
                 product.setPrice_per_unit(price);
                 product.setQuantity(quantity);
-                product.setPicture(new File(imagePath).getName());
+
+                // Only copy a new image if the user actually picked a new file
+                // (i.e. the path is absolute, not just a stored filename)
+                File maybeNewFile = new File(imagePath);
+                if (maybeNewFile.isAbsolute() && maybeNewFile.exists()) {
+                    try {
+                        String storedFilename = copyImageToSharedFolder(imagePath);
+                        product.setPicture(storedFilename);
+                    } catch (IOException ioEx) {
+                        showAlert("❌ Error", "Failed to save image: " + ioEx.getMessage(), Alert.AlertType.ERROR);
+                        e.consume();
+                        return;
+                    }
+                }
+                // else: imagePath is already just a filename in the DB — keep it unchanged
 
                 ProductListingService service = new ProductListingService();
                 service.modifier(product);
