@@ -34,7 +34,7 @@ public class OrderController {
 
 
     private String getCurrentUserId() {
-        return String.valueOf(SessionManager.getInstance().getCurrentUser().getId());
+        return SessionManager.getInstance().getCurrentUser().getEmail();
     }
 
     private boolean isAdmin() {

@@ -52,7 +52,7 @@ public class CartController {
 
     private void loadCart() {
         try {
-            List<Cart> cartItems = cartService.getCartByUser(String.valueOf(currentSessionUser.getId()));
+            List<Cart> cartItems = cartService.getCartByUser(currentSessionUser.getEmail());
 
             Platform.runLater(() -> {
                 cartGrid.getChildren().clear();
@@ -70,7 +70,7 @@ public class CartController {
                     int realAvailableStock;
                     try {
                         ProductListing product = productService.getProductById(item.getProductId());
-                        realAvailableStock = cartService.getAvailableStockForCart(item.getProductId(), String.valueOf(currentSessionUser.getId()));
+                        realAvailableStock = cartService.getAvailableStockForCart(item.getProductId(), currentSessionUser.getEmail());
                         item.setAvailableStock(realAvailableStock);
                         item.setPricePerUnit(product.getPrice_per_unit());
                         totalPrice += item.getQuantity() * product.getPrice_per_unit();
@@ -193,7 +193,7 @@ public class CartController {
             }
 
             try {
-                cartService.updateCartQuantity(item.getId(), item.getProductId(), String.valueOf(currentSessionUser.getId()), desiredQty);
+                cartService.updateCartQuantity(item.getId(), item.getProductId(), currentSessionUser.getEmail(), desiredQty);
                 loadCart();
             } catch (Exception ex) {
                 showAlert("Error", "Failed to update: " + ex.getMessage(), Alert.AlertType.ERROR);
@@ -403,9 +403,9 @@ public class CartController {
             if ("COMPLETED".equalsIgnoreCase(status)) {
                 // Payment successful - create order in database
                 try {
-                    Order order = new Order(String.valueOf(currentSessionUser.getId()), total, address, lat, lng, "Paypal");
+                    Order order = new Order(currentSessionUser.getEmail(), total, address, lat, lng, "Paypal");
                     orderService.createOrder(order, cartItems);
-                    cartService.clearCart(String.valueOf(currentSessionUser.getId()));
+                    cartService.clearCart(currentSessionUser.getEmail());
 
                     showAlert("Success!", "Payment completed!\nOrder placed successfully!\nTotal: " + String.format("%.2f TND", total),
                             Alert.AlertType.INFORMATION);
@@ -432,9 +432,9 @@ public class CartController {
      */
     private void handleNonPayPalPayment(List<Cart> cartItems, double total, String address, Double lat, Double lng, String payment) {
         try {
-            Order order = new Order(String.valueOf(currentSessionUser.getId()), total, address, lat, lng, payment);
+            Order order = new Order(currentSessionUser.getEmail(), total, address, lat, lng, payment);
             orderService.createOrder(order, cartItems);
-            cartService.clearCart(String.valueOf(currentSessionUser.getId()));
+            cartService.clearCart(currentSessionUser.getEmail());
             showAlert("Success!", "Order placed successfully!\nTotal: " + String.format("%.2f TND", total),
                     Alert.AlertType.INFORMATION);
             loadCart();

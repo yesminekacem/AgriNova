@@ -51,7 +51,7 @@ public class ProductListingController {
     private User currentSessionUser;
 
     private String getCurrentUser() {
-        return String.valueOf(SessionManager.getInstance().getCurrentUser().getId());
+        return SessionManager.getInstance().getCurrentUser().getEmail();
     }
 
     private boolean isAdmin() {
