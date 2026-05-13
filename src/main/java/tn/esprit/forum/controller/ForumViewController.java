@@ -6,8 +6,11 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import tn.esprit.forum.dao.ForumStatsDao;
+import tn.esprit.forum.entity.MostActiveUser;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import tn.esprit.forum.dao.ForumStatsDao;
 import tn.esprit.forum.dao.PostDao;
 import tn.esprit.forum.entity.Post;
 import tn.esprit.navigation.Router;
@@ -38,6 +41,12 @@ public class ForumViewController {
     @FXML private Label lblNotifBadge;
     @FXML private Button btnNotifications;
     @FXML private TextField txtSearch;
+    @FXML private Label lblActiveMembers;
+
+    @FXML private Label lblMostActive;
+    @FXML private Label lblMostActiveScore;
+
+    private ForumStatsDao statsDao;
     private String selectedCategory = "All";
     private NotificationDao notificationDao;
     private PostDao postDao;
@@ -54,6 +63,7 @@ public class ForumViewController {
             commentDao = new CommentDao();
             postDao = new PostDao();
             notificationDao = new NotificationDao();
+            statsDao = new ForumStatsDao();
         } catch (SQLException e) {
             showError("DB error: " + e.getMessage());
             return;
@@ -100,12 +110,16 @@ public class ForumViewController {
         applyFilters();
     }
     private void updateStats() {
-        // Update total topics count based on filtered results
         lblTotalTopics.setText(String.valueOf(filteredPosts.size()));
+        lblTotalReplies.setText("0"); // (we can fix this too later)
 
-        // For total replies, you'll need to implement a reply count in your Post entity
-        // For now, it's set to 0
-        lblTotalReplies.setText("0");
+        try {
+            int active = statsDao.countActiveMembers();
+            if (lblActiveMembers != null) lblActiveMembers.setText(String.valueOf(active));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (lblActiveMembers != null) lblActiveMembers.setText("0");
+        }
     }
 
     @FXML

@@ -222,14 +222,27 @@
 
                 <VBox HBox.hgrow="ALWAYS"
                       style="-fx-background-color: rgba(249,115,22,0.14);
-                             -fx-background-radius: 18;
-                             -fx-padding: 14;
-                             -fx-border-color: rgba(249,115,22,0.20);
-                             -fx-border-radius: 18;">
+             -fx-background-radius: 18;
+             -fx-padding: 14;
+             -fx-border-color: rgba(249,115,22,0.20);
+             -fx-border-radius: 18;">
                     <Label text="Active Members"
                            style="-fx-text-fill: #7c2d12; -fx-font-weight: 800;"/>
-                    <Label text="142"
+
+                    <Label fx:id="lblActiveMembers" text="0"
                            style="-fx-text-fill: #7c2d12; -fx-font-size: 24px; -fx-font-weight: 900;"/>
+
+                    <!-- ✅ Most active badge -->
+                    <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 6 0 0 0;">
+                        <Label text="👑"
+                               style="-fx-font-size: 14px;"/>
+                        <Label fx:id="lblMostActive"
+                               text="Most active: -"
+                               style="-fx-text-fill: #7c2d12; -fx-font-weight: 800;"/>
+                        <Label fx:id="lblMostActiveScore"
+                               text=""
+                               style="-fx-text-fill: #9a3412; -fx-font-weight: 700;"/>
+                    </HBox>
                 </VBox>
 
             </HBox>
